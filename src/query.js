@@ -1,138 +1,180 @@
 import _ from 'lodash';
+import Field from './field'
 
 export default class Query {
-	constructor(schema) {
-		if (!schema) throw 'A schema name is required';
+  constructor(schema) {
+    if (!schema) throw 'A schema name is required';
 
-		this.schema = schema;
-		this.terms = [];
-	}
+    this.schema = schema;
+    this.terms = [];
+  }
 
-	toJS() {
-		return {
-                        $type: 'query',
-			$schema: this.schema,
-			$query: this.terms
-		};
-	}
+  toJS() {
+    return {
+      $type: 'query',
+      $schema: this.schema,
+      $query: this.terms
+    };
+  }
 
-	get(id) {
-		this.terms.push(['$get', id]);
-		return this;
-	}
+  // Selecting Data
 
-	getAll(ids, index = 'id') {
-		this.terms.push(['$get_all', [index, ids]]);
-		return this;
-	}
+  get(id) {
+    this.terms.push(['$get', {id}]);
+    return this;
+  }
 
-	filter(...filters) {
-		var filterSet = filters.reduce((filterSet, currentFilter) => {
-			return filterSet.concat(currentFilter.toJS());
-		}, []);
+  getAll(ids, index = 'id') {
+    this.terms.push(['$get_all', {index, ids}]);
+    return this;
+  }
 
-		this.terms.push(['$filter', filterSet]);
-		return this;
-	}
+  filter() {
+    var params = {};
 
-	hasFields(...fields) {
-		this.terms.push(['$has_fields', fields])
-		return this;
-	}
+    if (_.last(arguments) instanceof Array) {
+      params.predicate = _.slice(arguments)
+    } else {
+      params.predicate = _.slice(arguments, 0, arguments.length - 1);
+      params.default = _.last(arguments).default;
+    }
 
-	withFields(...fields) {
-		this.terms.push(['$with_fields', fields])
-		return this;
-	}
+    this.terms.push(['$filter', params]);
+    return this;
+  }
 
-	orderBy(field, ordering = 'asc') {
-		if(ordering !== 'asc' && ordering !== 'desc') {
-			throw new Error('ordering must be desc or asc');
-		}
+  between(options) {
+    const defaults = {
+      lowerKey : '$minval',
+      upperKey : '$maxval'
+    };
+    const params = _.assign(defaults, options);
+    this.terms.push(['$between', params]);
+    return this;
+  }
 
-		ordering = '$' + ordering;
-		this.terms.push(['$order_by', field, ordering])
-		return this;
-	}
+  // Transformations
 
-	skip(num) {
-		this.terms.push(['$skip', num]);
-		return this;
-	}
+  hasFields(...fields) {
+    this.terms.push(['$has_fields', {fields}]);
+    return this;
+  }
 
-	limit(num) {
-		this.terms.push(['$limit', num]);
-		return this;
-	}
+  withFields(...fields) {
+    this.terms.push(['$with_fields', {fields}]);
+    return this;
+  }
 
-	slice(start, end) {
-		this.terms.push(['$slice', [start, end]]);
-		return this;
-	}
+  orderBy({key, index, ordering}) {
+    ordering = (ordering === undefined) ? '$asc' : ordering;
+    if(['asc', 'desc'].indexOf(ordering) !== -1) {
+      console.warn('asc/desc parameters deprecated. Please use $asc/$desc.');
+      ordering = '$' + ordering;
+    }
 
-	nth(num) {
-		this.terms.push(['$nth', num]);
-		return this;
-	}
+    if(['$asc', '$desc'].indexOf(ordering) === -1) {
+      throw new Error('ordering must be $desc or $asc');
+    }
 
-	sample(num) {
-		this.terms.push(['$sample', num]);
-		return this;
-	}
+    var params = { ordering };
 
-	pluck(...fields) {
-		this.terms.push(['$pluck', fields]);
-		return this;
-	}
+    if(key !== undefined) {
+      params.key = key;
+    }
 
-	without(...fields) {
-		this.terms.push(['$without', fields]);
-		return this;
-	}
+    if(index !== undefined) {
+      params.index = index;
+    }
 
-	group(field) {
-		this.terms.push(['$group', field]);
-		return this;
-	}
+    this.terms.push(['$order_by', params]);
+    return this;
+  }
 
-	count() {
-		this.terms.push(['$count']);
-		return this;
-	}
+  skip(n) {
+    this.terms.push(['$skip', {n}]);
+    return this;
+  }
 
-	sum(field) {
-		this.terms.push(['$sum', field]);
-		return this;
-	}
+  limit(n) {
+    this.terms.push(['$limit', {n}]);
+    return this;
+  }
 
-	avg(field) {
-		this.terms.push(['$avg', field]);
-		return this;
-	}
+  slice(startOffset, endOffset) {
+    this.terms.push(['$slice', {startOffset, endOffset}]);
+    return this;
+  }
 
-	min(field) {
-		this.terms.push(['$min', field]);
-		return this;
-	}
+  nth(n) {
+    this.terms.push(['$nth', {n}]);
+    return this;
+  }
 
-	max(field) {
-		this.terms.push(['$max', field]);
-		return this;
-	}
+  sample(n) {
+    this.terms.push(['$sample', {n}]);
+    return this;
+  }
 
-	between(start, end, index) {
-		var value = index ? [start, end, index] : [start, end];
-		this.terms.push(['$between', value]);
-		return this;
-	}
+  // Manipulation
 
-	getIntersecting(geometry, index) {
-		this.terms.push(['$get_intersecting', [index, geometry]]);
-		return this;
-	}
+  pluck(...fields) {
+    this.terms.push(['$pluck', {fields}]);
+    return this;
+  }
 
-	getNearest(geometry, index) {
-		this.terms.push(['$get_nearest', [index, geometry]]);
-		return this;
-	}
+  without(...fields) {
+    this.terms.push(['$without', {fields}]);
+    return this;
+  }
+
+  // Aggregation
+
+  group(field) {
+    this.terms.push(['$group', {field}]);
+    return this;
+  }
+
+  count() {
+    this.terms.push(['$count']);
+    return this;
+  }
+
+  sum(field) {
+    this.terms.push(['$sum', {field}]);
+    return this;
+  }
+
+  avg(field) {
+    this.terms.push(['$avg', {field}]);
+    return this;
+  }
+
+  min(field) {
+    this.terms.push(['$min', {field}]);
+    return this;
+  }
+
+  max(field) {
+    this.terms.push(['$max', {field}]);
+    return this;
+  }
+
+  // Geospatial
+
+  getIntersecting(geometry, index) {
+    this.terms.push(['$get_intersecting', {index, geometry}]);
+    return this;
+  }
+
+  getNearest(geometry, index) {
+    this.terms.push(['$get_nearest', {index, geometry}]);
+    return this;
+  }
+
+  // Delete
+
+  delete(durability = 'hard', return_changes = false) {
+    this.terms.push(['$delete', {durability, return_changes}]);
+    return this;
+  }
 }

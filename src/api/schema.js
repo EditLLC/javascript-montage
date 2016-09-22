@@ -8,15 +8,16 @@ export default class SchemaAPI {
 		return this.client.request('schemas/', 'POST', payload);
 	}
 
-	list() {
-		return this.client.request('schemas/');
+	list(params) {
+		params = params ? params : {};
+		return this.client.request('schemas/', 'GET', params);
 	}
 
 	get(schema) {
 		return this.client.request(`schemas/${schema}/`);
 	}
 
-	update(schema, name, fields) {
+	update(schema, { name, fields }) {
 		var payload = {};
 
 		if (name) {
@@ -32,7 +33,13 @@ export default class SchemaAPI {
 		}
 	}
 
-	remove(schema) {
+	delete(schema) {
 		return this.client.request(`schemas/${schema}/`, 'DELETE');
+	}
+
+	remove(schema) {
+		console.warn("The function remove() is deprecated, use delete().");
+
+		return this.delete(schema);
 	}
 }

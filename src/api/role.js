@@ -8,15 +8,16 @@ export default class RoleAPI {
 		return this.client.request(`roles/`, 'POST', payload);
 	}
 
-	list() {
-		return this.client.request(`roles/`);
+	list(params) {
+		params = params ? params : {};
+		return this.client.request(`roles/`, 'GET', params);
 	}
 
 	get(role) {
 		return this.client.request(`roles/${role}/`);
 	}
 
-	update(role, name, add_users, remove_users) {
+	update(role, { name, add_users, remove_users }) {
 		var payload = {};
 
 		if (name) {
@@ -36,7 +37,13 @@ export default class RoleAPI {
 		}
 	}
 
-	remove(role) {
+	delete(role) {
 		return this.client.request(`roles/${role}/`, 'DELETE');
+	}
+
+	remove(role) {
+		console.warn("The function remove() is deprecated, use delete().");
+
+		return this.delete(role);
 	}
 }

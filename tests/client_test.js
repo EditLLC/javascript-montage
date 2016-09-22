@@ -1,6 +1,6 @@
 import expect from 'expect.js';
 import querystring from 'querystring';
-import {Client, Query} from '../src/index';
+import Client from '../src/client';
 import {EventEmitter} from 'events';
 
 var emitter = new EventEmitter();
@@ -94,7 +94,7 @@ describe('Client', () => {
 			});
 
 			client.authenticate('test@example.com', 'letmein').then((response) => {
-				expect(response).to.be.eql({data: {token: 'USER_TOKEN'}});
+				expect(response).to.eql({data: {token: 'USER_TOKEN'}});
 				expect(client.token).to.eql('USER_TOKEN');
 				done();
 			});
@@ -118,7 +118,7 @@ describe('Client', () => {
 			client.authenticate('fake@example.com', 'invalid').then(response => {
 				expect().fail();
 			}, error => {
-				expect(error).to.eql([{'detail': 'Incorrect authentication credentials.'}])
+				expect(error).to.eql([{'detail': 'Incorrect authentication credentials.'}]);
 				expect(client.token).to.be(undefined);
 				done();
 			});
@@ -170,7 +170,7 @@ describe('Client', () => {
 			return client.request('#').then(response => {
 				expect().fail();
 			}, error => {
-				expect(error).to.be.eql({errors: ['something went wrong']});
+				expect(error).to.eql({errors: ['something went wrong']});
 				done();
 			});
 		});
@@ -187,7 +187,7 @@ describe('Client', () => {
 			return client.request('#').then(response => {
 				expect.fail();
 			}, error => {
-				expect(error).to.be.eql(['something went wrong']);
+				expect(error).to.eql(['something went wrong']);
 			});
 		});
 
@@ -203,7 +203,7 @@ describe('Client', () => {
 				expect.fail();
 			}, error => {
 				return error.text().then(text => {
-					expect(text).to.be.eql('something went wrong');
+					expect(text).to.eql('something went wrong');
 				});
 			});
 		});

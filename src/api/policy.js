@@ -20,7 +20,7 @@ export default class PolicyAPI {
 		return this.client.request(`policy/${policy_id}/`);
 	}
 
-	update(policy_id, description, policy) {
+	update(policy_id, { description, policy }) {
 		if(!description && !policy) {
 			throw new Error('Must provide a `description` or `policy`');
 		}
@@ -35,13 +35,19 @@ export default class PolicyAPI {
 			payload.policy = policy;
 		}
 
-		if(payload) {
+		if (Object.keys(payload).length) {
 			return this.client.request(`policy/${policy_id}/`, 'PATCH', payload);
 		}
 	}
 
-	remove(policy_id) {
+	delete(policy_id) {
 		return this.client.request(`policy/${policy_id}/`, 'DELETE');
+	}
+
+	remove(policy_id) {
+		console.warn("The function remove() is deprecated, use delete().");
+
+		return this.delete(policy_id);
 	}
 
 	checkPermission(action, resource) {
